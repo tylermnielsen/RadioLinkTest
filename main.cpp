@@ -5,7 +5,7 @@
 #include "pico/stdlib.h"
 
 #define USING_RFM 0
-#define USING_ON_BREADBOARD 1
+#define USING_ON_BREADBOARD 0
 #define TRANSMIT_INTERVAL_MS 1000
 
 #define RADIO_FREQ 434.0
