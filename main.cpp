@@ -259,7 +259,7 @@ int main() {
 
       if (!transmitting && !receiving &&
           (last_send - radio_now) > TRANSMIT_INTERVAL_MS) {
-        printf("Transmitting...");
+        printf("Transmitting...\n");
         operation_start_time = to_ms_since_boot(get_absolute_time());
         int transmit_state = radio->startTransmit("Hello, this is a test");
         transmitting = true;
