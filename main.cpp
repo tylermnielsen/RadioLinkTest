@@ -159,115 +159,113 @@ int main() {
   int channel_scan_state = radio->startChannelScan();
   printf("Channel scan state: %d\n", channel_scan_state);
 
+  bool receiving = false;
+  bool transmitting = false;
+  state = 0;
+  uint32_t operation_start_time = to_ms_since_boot(get_absolute_time());
+  uint32_t last_receive_time = to_ms_since_boot(get_absolute_time());
+  int transmission_size = 0;
+  uint32_t last_send = to_ms_since_boot(get_absolute_time());
   int it = 0;
+
   while (true) {
     printf("It: %d", it++);
 
-    bool receiving = false;
-    bool transmitting = false;
-    int state = 0;
-    uint32_t operation_start_time = to_ms_since_boot(get_absolute_time());
-    uint32_t last_receive_time = to_ms_since_boot(get_absolute_time());
-    int transmission_size = 0;
-    uint32_t last_send = to_ms_since_boot(get_absolute_time());
+    // save now time since boot
+    uint32_t radio_now = to_ms_since_boot(get_absolute_time());
 
-    while (true) {
-      // save now time since boot
-      uint32_t radio_now = to_ms_since_boot(get_absolute_time());
-
-      // check operation duration to avoid hanging in an operation mode
-      if (receiving && abs((long long)(radio_now - operation_start_time)) >
-                           RADIO_RECEIVE_TIMEOUT_MS) {
+    // check operation duration to avoid hanging in an operation mode
+    if (receiving && abs((long long)(radio_now - operation_start_time)) >
+                         RADIO_RECEIVE_TIMEOUT_MS) {
 #if RADIO_LOGGING
-        printf("receive timeout\n");
+      printf("receive timeout\n");
 #endif
-        receiving = false;
-        radio->startChannelScan();
-      } else if (transmitting &&
-                 abs((long long)(radio_now - operation_start_time)) >
-                     RADIO_TRANSMIT_TIMEOUT_MS) {
+      receiving = false;
+      radio->startChannelScan();
+    } else if (transmitting &&
+               abs((long long)(radio_now - operation_start_time)) >
+                   RADIO_TRANSMIT_TIMEOUT_MS) {
 #if TEMP_ON || RADIO_LOGGING
-        printf("transmit timeout\n");
+      printf("transmit timeout\n");
 #endif
-        transmitting = false;
-        radio->finishTransmit();
-        radio->startChannelScan();
-      }
-
-      // handle interrupt flags
-      if (cad_detected_RFM || operation_done_RFM || general_flag_SX) {
-        // handle finished transmission
-        if (transmitting && operation_done_RFM) {
-          transmitting = false;
-          radio->finishTransmit();
-        }
-
-        // handle finished receive
-        else if (receiving) {
-          size_t packet_size = radio->getPacketLength();
-          uint8_t packet[packet_size];
-
-          int packet_state = radio->readData(packet, packet_size);
-
-          if (packet_state == RADIOLIB_ERR_NONE) {
-            last_receive_time = to_ms_since_boot(get_absolute_time());
-
-            printf("Received packet: ");
-            for (int i = 0; i < packet_size; i++) {
-              printf("%c", packet[i]);
-            }
-            printf("\n");
-            printf("Stats: RSSI: %d SNR: %d Freq Error: %d\n", radio->getRSSI(),
-                   radio->getSNR(),
-                   (radio == &radioSX) ? radioSX.getFrequencyError()
-                                       : radioRFM.getFrequencyError());
-          }
-
-          // clear receiving flag
-          receiving = false;
-        }
-        // handle other interrupts (CAD done)
-        // this is the main difference between the 2 modules
-        else {
-          if (radio == &radioRFM && cad_detected_RFM) {
-            state = radio->startReceive();
-            operation_start_time = to_ms_since_boot(get_absolute_time());
-
-            receiving = true;
-          } else if (radio == &radioSX) {  // radio is radioSX
-            state =
-                radioSX.getChannelScanResult();  // not a PhysicalLayer function
-
-            if (state == RADIOLIB_LORA_DETECTED) {
-              state = radio->startReceive();
-
-              operation_start_time = to_ms_since_boot(get_absolute_time());
-              receiving = true;
-            }
-          }
-        }
-
-        if (!receiving && !transmitting) {
-          state = radio->startChannelScan();
-        }
-
-        // clear flags
-        general_flag_SX = false;
-        cad_detected_RFM = false;
-        operation_done_RFM = false;
-      }
-
-      if (!transmitting && !receiving &&
-          (last_send - radio_now) > TRANSMIT_INTERVAL_MS) {
-        printf("Transmitting...\n");
-        operation_start_time = to_ms_since_boot(get_absolute_time());
-        int transmit_state = radio->startTransmit("Hello, this is a test");
-        transmitting = true;
-      }
-
-      sleep_ms(1000);
+      transmitting = false;
+      radio->finishTransmit();
+      radio->startChannelScan();
     }
 
-    return 0;
+    // handle interrupt flags
+    if (cad_detected_RFM || operation_done_RFM || general_flag_SX) {
+      // handle finished transmission
+      if (transmitting && operation_done_RFM) {
+        transmitting = false;
+        radio->finishTransmit();
+      }
+
+      // handle finished receive
+      else if (receiving) {
+        size_t packet_size = radio->getPacketLength();
+        uint8_t packet[packet_size];
+
+        int packet_state = radio->readData(packet, packet_size);
+
+        if (packet_state == RADIOLIB_ERR_NONE) {
+          last_receive_time = to_ms_since_boot(get_absolute_time());
+
+          printf("Received packet: ");
+          for (int i = 0; i < packet_size; i++) {
+            printf("%c", packet[i]);
+          }
+          printf("\n");
+          printf("Stats: RSSI: %d SNR: %d Freq Error: %d\n", radio->getRSSI(),
+                 radio->getSNR(),
+                 (radio == &radioSX) ? radioSX.getFrequencyError()
+                                     : radioRFM.getFrequencyError());
+        }
+
+        // clear receiving flag
+        receiving = false;
+      }
+      // handle other interrupts (CAD done)
+      // this is the main difference between the 2 modules
+      else {
+        if (radio == &radioRFM && cad_detected_RFM) {
+          state = radio->startReceive();
+          operation_start_time = to_ms_since_boot(get_absolute_time());
+
+          receiving = true;
+        } else if (radio == &radioSX) {  // radio is radioSX
+          state =
+              radioSX.getChannelScanResult();  // not a PhysicalLayer function
+
+          if (state == RADIOLIB_LORA_DETECTED) {
+            state = radio->startReceive();
+
+            operation_start_time = to_ms_since_boot(get_absolute_time());
+            receiving = true;
+          }
+        }
+      }
+
+      if (!receiving && !transmitting) {
+        state = radio->startChannelScan();
+      }
+
+      // clear flags
+      general_flag_SX = false;
+      cad_detected_RFM = false;
+      operation_done_RFM = false;
+    }
+
+    if (!transmitting && !receiving &&
+        (last_send - radio_now) > TRANSMIT_INTERVAL_MS) {
+      printf("Transmitting...\n");
+      operation_start_time = to_ms_since_boot(get_absolute_time());
+      int transmit_state = radio->startTransmit("Hello, this is a test");
+      transmitting = true;
+    }
+
+    sleep_ms(1000);
   }
+
+  return 0;
 }
