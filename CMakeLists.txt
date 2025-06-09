@@ -22,6 +22,7 @@ add_executable(radio_test
 
 target_link_libraries(radio_test
   pico_stdlib
+  hardware_spi
   RadioLib
 )
 
