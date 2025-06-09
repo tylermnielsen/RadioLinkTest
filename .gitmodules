@@ -1,6 +1,6 @@
 [submodule "pico-sdk"]
 	path = pico-sdk
-	url = https://github.com/raspberrypi/pico-sdk.git
+	url = https://github.com/tylermnielsen/pico-sdk.git
 [submodule "RadioLib"]
 	path = RadioLib
 	url = https://github.com/jgromes/RadioLib.git
