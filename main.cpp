@@ -6,7 +6,7 @@
 
 #define USING_RFM 0
 #define USING_ON_BREADBOARD 0
-#define TRANSMIT_INTERVAL_MS 1000
+#define TRANSMIT_INTERVAL_MS 1000  // <<<<
 
 #define RADIO_FREQ 434.0
 #define RADIO_BW 125.0
@@ -58,7 +58,7 @@
 
 #endif
 
-uint8_t radio_transmit_power = 2;
+uint8_t radio_transmit_power = 22;
 
 PicoHal* picoHal =
     new PicoHal(spi0, PICO_DEFAULT_SPI_TX_PIN, PICO_DEFAULT_SPI_RX_PIN,
@@ -116,6 +116,8 @@ int radio_hardware_switch_to(PhysicalLayer* new_radio) {
 int main() {
   stdio_init_all();
 
+  sleep_ms(10000);
+
   printf("Starting...\n");
 
   // initialize rf switch and power switch gpio
@@ -169,8 +171,6 @@ int main() {
   int it = 0;
 
   while (true) {
-    printf("It: %d", it++);
-
     // save now time since boot
     uint32_t radio_now = to_ms_since_boot(get_absolute_time());
 
@@ -258,13 +258,14 @@ int main() {
 
     if (!transmitting && !receiving &&
         (last_send - radio_now) > TRANSMIT_INTERVAL_MS) {
+      printf("It: %d\n", it++);
       printf("Transmitting...\n");
       operation_start_time = to_ms_since_boot(get_absolute_time());
       int transmit_state = radio->startTransmit("Hello, this is a test");
+      printf("Transmit test: %d\n", transmit_state);
       transmitting = true;
+      last_send = to_ms_since_boot(get_absolute_time());
     }
-
-    sleep_ms(1000);
   }
 
   return 0;
