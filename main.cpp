@@ -58,6 +58,8 @@
 
 #endif
 
+#define RADIO_LOGGING 1
+
 uint8_t radio_transmit_power = 22;
 
 PicoHal* picoHal =
@@ -195,8 +197,12 @@ int main() {
 
     // handle interrupt flags
     if (cad_detected_RFM || operation_done_RFM || general_flag_SX) {
+      if (general_flag_SX) {
+        uint32_t irqs = radioSX.getIrqFlags();
+        printf("SX Irqs: %08X\n", irqs);
+      }
       // handle finished transmission
-      if (transmitting && operation_done_RFM) {
+      if (transmitting && (operation_done_RFM || general_flag_SX)) {
         transmitting = false;
         radio->finishTransmit();
       }
@@ -257,7 +263,7 @@ int main() {
     }
 
     if (!transmitting && !receiving &&
-        (last_send - radio_now) > TRANSMIT_INTERVAL_MS) {
+        (radio_now - last_send) > TRANSMIT_INTERVAL_MS) {
       printf("It: %d\n", it++);
       printf("Transmitting...\n");
       operation_start_time = to_ms_since_boot(get_absolute_time());
