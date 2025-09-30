@@ -8,10 +8,10 @@
 #define USING_ON_BREADBOARD 0
 #define TRANSMIT_INTERVAL_MS 1000  // <<<<
 
-#define RADIO_FREQ 434.0
-#define RADIO_BW 125.0
-#define RADIO_SF 9
-#define RADIO_CR 7
+#define RADIO_FREQ 437.400
+#define RADIO_BW 62.5
+#define RADIO_SF 10
+#define RADIO_CR 5
 #define RADIO_SYNC_WORD 18
 #define RADIO_PREAMBLE_LEN 8
 #define RADIO_RFM_GAIN 0
