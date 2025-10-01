@@ -1,6 +1,8 @@
 #include <RadioLib.h>
 #include <stdio.h>
 
+#include <string>
+
 #include "PicoHal.h"
 #include "pico/stdlib.h"
 
@@ -267,7 +269,10 @@ int main() {
       printf("It: %d\n", it++);
       printf("Transmitting...\n");
       operation_start_time = to_ms_since_boot(get_absolute_time());
-      int transmit_state = radio->startTransmit("Hello, this is a test");
+
+      std::string msg = "Hello, this is a test " + std::to_string(it) + "\n";
+      int transmit_state = radio->startTransmit(msg.c_str(), msg.length());
+      printf(msg.c_str());
       printf("Transmit test: %d\n", transmit_state);
       transmitting = true;
       last_send = to_ms_since_boot(get_absolute_time());
