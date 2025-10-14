@@ -62,7 +62,8 @@
 
 #define RADIO_LOGGING 1
 
-uint8_t radio_transmit_power = 22;
+#define RADIO_RFM_TRANSMIT_POWER 10
+#define RADIO_SX_TRANSMIT_POWER 21
 
 PicoHal* picoHal =
     new PicoHal(spi0, PICO_DEFAULT_SPI_TX_PIN, PICO_DEFAULT_SPI_RX_PIN,
@@ -142,9 +143,9 @@ int main() {
   int state;
 #if USING_RFM
   radio_hardware_switch_to(&radioRFM);
-  state =
-      radioRFM.begin(RADIO_FREQ, RADIO_BW, RADIO_SF, RADIO_CR, RADIO_SYNC_WORD,
-                     radio_transmit_power, RADIO_PREAMBLE_LEN, RADIO_RFM_GAIN);
+  state = radioRFM.begin(RADIO_FREQ, RADIO_BW, RADIO_SF, RADIO_CR,
+                         RADIO_SYNC_WORD, RADIO_RFM_TRANSMIT_POWER,
+                         RADIO_PREAMBLE_LEN, RADIO_RFM_GAIN);
 
   printf("State: %d\n", state);
 
@@ -154,7 +155,7 @@ int main() {
   radio_hardware_switch_to(&radioSX);
   radio_state_SX =
       radioSX.begin(RADIO_FREQ, RADIO_BW, RADIO_SF, RADIO_CR, RADIO_SYNC_WORD,
-                    radio_transmit_power, RADIO_PREAMBLE_LEN,
+                    RADIO_SX_TRANSMIT_POWER, RADIO_PREAMBLE_LEN,
                     RADIO_SX_TXCO_VOLT, RADIO_SX_USE_REG_LDO);
   printf("State: %d\n", state);
 
